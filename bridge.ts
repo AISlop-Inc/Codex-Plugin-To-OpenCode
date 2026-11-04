@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+import { realpathSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
@@ -175,6 +177,23 @@ async function run() {
     }
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-    await run();
+if (process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href) {
+    const args = process.argv.slice(2);
+    if (args.length === 1 && (args[0] === '--help' || args[0] === '-h')) {
+        process.stdout.write(`Codex MCP Portal
+
+Usage: codex-mcp-portal [--help]
+
+Starts a stdio MCP server for existing ChatGPT connector tools.
+Configure this command in any stdio-compatible MCP client.
+
+Credentials: $CODEX_HOME/auth.json (default: ~/.codex/auth.json)
+Token renewal is managed by Codex. No HTTP listener is started.
+`);
+    } else if (args.length) {
+        process.stderr.write('Unknown arguments. Use codex-mcp-portal --help.\n');
+        process.exitCode = 2;
+    } else {
+        await run();
+    }
 }
