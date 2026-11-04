@@ -1,0 +1,24 @@
+{
+    "name": "codex-plugin-to-opencode",
+    "version": "0.1.0",
+    "description": "Use existing ChatGPT connector tools in OpenCode through a local MCP bridge.",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/AISlop-Inc/Codex-Plugin-To-OpenCode.git"
+    },
+    "engines": {
+        "node": ">=24"
+    },
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "start": "node bridge.ts",
+        "test": "node --test bridge.test.ts",
+        "typecheck": "tsc --noEmit"
+    },
+    "devDependencies": {
+        "@types/node": "^24.0.0",
+        "typescript": "^5.8.0"
+    }
+}

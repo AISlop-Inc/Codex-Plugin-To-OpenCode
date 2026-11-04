@@ -1,0 +1,7 @@
+node_modules/
+.env
+.env.*
+auth.json
+.codex/
+*.log
+.DS_Store
