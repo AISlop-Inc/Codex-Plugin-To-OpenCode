@@ -114,6 +114,27 @@ func validateResponse(wire []byte, id json.RawMessage) (json.RawMessage, error) 
 	return compact.Bytes(), nil
 }
 
+func normalizeToolResult(wire json.RawMessage) (json.RawMessage, error) {
+	var message map[string]json.RawMessage
+	if err := json.Unmarshal(wire, &message); err != nil {
+		return nil, errors.New("Invalid MCP tool response.")
+	}
+	if message["result"] == nil {
+		return wire, nil
+	}
+	var result map[string]json.RawMessage
+	if err := json.Unmarshal(message["result"], &result); err != nil {
+		return nil, errors.New("Invalid MCP tool result.")
+	}
+	if !bytes.Equal(bytes.TrimSpace(result["structuredContent"]), []byte("null")) {
+		return wire, nil
+	}
+	// Upstream text-only results use null, but MCP requires this optional field to be an object or absent.
+	delete(result, "structuredContent")
+	message["result"], _ = json.Marshal(result)
+	return json.Marshal(message)
+}
+
 func errorResponse(id json.RawMessage, code int, detail string) json.RawMessage {
 	if id == nil {
 		id = json.RawMessage(`null`)

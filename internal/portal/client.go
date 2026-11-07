@@ -128,6 +128,9 @@ func (client *Client) relay(ctx context.Context, message request) (json.RawMessa
 			client.mu.Unlock()
 		}
 	}
+	if message.Method == "tools/call" {
+		return normalizeToolResult(result)
+	}
 	return result, nil
 }
 

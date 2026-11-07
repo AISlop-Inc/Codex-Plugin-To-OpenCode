@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"reflect"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -132,6 +133,101 @@ func TestSSEAndLargeJSONResponses(t *testing.T) {
 		if _, err := readResponse(response(200, contentType, body), json.RawMessage(`8`)); err != nil {
 			t.Fatal(err)
 		}
+	}
+}
+
+func TestToolResultStructuredContent(t *testing.T) {
+	for _, test := range []struct {
+		name   string
+		method string
+		result string
+		want   string
+	}{
+		{
+			name:   "null",
+			method: "tools/call",
+			result: `{"content":[{"type":"text","text":"Slack result"}],"structuredContent":null,"_meta":{"source":"slack"}}`,
+			want:   `{"content":[{"type":"text","text":"Slack result"}],"_meta":{"source":"slack"}}`,
+		},
+		{
+			name:   "tool error",
+			method: "tools/call",
+			result: `{"content":[{"type":"text","text":"Search failed"}],"structuredContent":null,"isError":true}`,
+			want:   `{"content":[{"type":"text","text":"Search failed"}],"isError":true}`,
+		},
+		{
+			name:   "object",
+			method: "tools/call",
+			result: `{"content":[],"structuredContent":{"matches":[],"optional":null}}`,
+			want:   `{"content":[],"structuredContent":{"matches":[],"optional":null}}`,
+		},
+		{
+			name:   "absent",
+			method: "tools/call",
+			result: `{"content":[]}`,
+			want:   `{"content":[]}`,
+		},
+		{
+			name:   "invalid non-null remains invalid",
+			method: "tools/call",
+			result: `{"content":[],"structuredContent":[]}`,
+			want:   `{"content":[],"structuredContent":[]}`,
+		},
+		{
+			name:   "other methods unchanged",
+			method: "tools/list",
+			result: `{"tools":[],"structuredContent":null}`,
+			want:   `{"tools":[],"structuredContent":null}`,
+		},
+	} {
+		for _, contentType := range []string{"application/json", "text/event-stream"} {
+			t.Run(test.name+"/"+contentType, func(t *testing.T) {
+				client := NewClient(fixtureAuth)
+				wire := `{"jsonrpc":"2.0","id":9007199254740993,"result":` + test.result + `,"extension":{"keep":true}}`
+				client.http.Transport = roundTripFunc(func(*http.Request) (*http.Response, error) {
+					body := wire
+					if contentType == "text/event-stream" {
+						body = "data: " + wire + "\n\n"
+					}
+					return response(200, contentType, body), nil
+				})
+				message := mustRequest(t, `{"jsonrpc":"2.0","id":9007199254740993,"method":"`+test.method+`"}`)
+				result, err := client.relay(context.Background(), message)
+				if err != nil {
+					t.Fatal(err)
+				}
+				var envelope map[string]json.RawMessage
+				if err := json.Unmarshal(result, &envelope); err != nil {
+					t.Fatal(err)
+				}
+				if string(envelope["id"]) != "9007199254740993" || string(envelope["extension"]) != `{"keep":true}` {
+					t.Fatal("response identity or extensions changed")
+				}
+				var got, want any
+				if err := json.Unmarshal(envelope["result"], &got); err != nil {
+					t.Fatal(err)
+				}
+				if err := json.Unmarshal([]byte(test.want), &want); err != nil {
+					t.Fatal(err)
+				}
+				if !reflect.DeepEqual(got, want) {
+					t.Fatalf("result = %s, want %s", envelope["result"], test.want)
+				}
+			})
+		}
+	}
+}
+
+func TestToolRPCErrorIsPreserved(t *testing.T) {
+	client := NewClient(fixtureAuth)
+	wire := `{"jsonrpc":"2.0","id":1,"error":{"code":-32602,"message":"Invalid arguments","data":{"field":"keywords"}}}`
+	client.http.Transport = roundTripFunc(func(*http.Request) (*http.Response, error) {
+		return response(200, "application/json", wire), nil
+	})
+	message := mustRequest(t, `{"jsonrpc":"2.0","id":1,"method":"tools/call"}`)
+	result, err := client.relay(context.Background(), message)
+	if err != nil || string(result) != wire {
+		t.Fatalf("RPC error changed: %s, %v", result, err)
 	}
 }
 

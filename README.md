@@ -203,6 +203,10 @@ go build -o bin/codex-mcp-portal ./cmd/codex-mcp-portal
 テストはモック通信と一時ファイルのみで、実際の認証情報やGoogle Driveを使用しません。  
 認証の再読み取り、アカウント固定、リダイレクト拒否、非再送、SSE、大きなメッセージ、並行処理、JSON-RPC検証、CLIを検証します。
 
+- `tools/call`の応答で`structuredContent`が`null`の場合だけ、その項目を省略して中継します。
+- 本文、正常な構造化データ、エラー、メタデータは保持します。
+- JSON応答とSSE応答の両方に適用し、`null`以外の不正な値は書き換えません。
+
 ## TypeScript版からの移行・更新・削除
 
 旧版のnpmインストールや`node bridge.ts`起動は、Goバイナリに置き換えます。  
