@@ -1,3 +1,6 @@
+> AISlop-Inc npm package: `@aislop-inc/codex-mcp-portal`.
+> Manual release instructions: [npm publishing](docs/NPM-PUBLISHING.md).
+
 # Codex MCP Portal
 
 Codex / ChatGPTで接続済みのGoogle Driveなどを、**標準のstdio MCPサーバーとして公開するGo製のポータル**です。  
@@ -226,3 +229,18 @@ Codex認証情報とChatGPT側の接続は保持してください。
 - [OpenAI MCPドキュメント](https://developers.openai.com/codex/mcp)
 - [Codexの共通MCP設定](https://github.com/openai/codex/blob/main/codex-rs/codex-mcp/src/mcp/mod.rs)
 - [MIT License](LICENSE)
+
+## npm installation
+
+After the first npm publication:
+
+```sh
+npm install -g @aislop-inc/codex-mcp-portal
+codex-mcp-portal --help
+# or
+npx @aislop-inc/codex-mcp-portal --help
+```
+
+This npm distribution needs Node.js to launch the bundled Go binary.
+It includes macOS, Linux and Windows binaries for x64 and arm64.
+Standalone Go installations remain available without Node.js.

@@ -1,0 +1,22 @@
+{
+  "version": "0.3.0",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "codex-mcp-portal": "npm/cli.cjs"
+  },
+  "files": [
+    "npm/cli.cjs",
+    "binaries/",
+    "README.md",
+    "LICENSE"
+  ],
+  "name": "@aislop-inc/codex-mcp-portal",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AISlop-Inc/Codex-Plugin-To-OpenCode.git"
+  }
+}
